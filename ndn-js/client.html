@@ -1,0 +1,66 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>CLIENT</title>
+  </head>
+  <body>
+    <input type="button" onclick="fetch('test')" value="Start" />
+
+    <ul id="receivedPackets">
+    </ul>
+    
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.0/themes/smoothness/jquery-ui.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.0/jquery-ui.min.js"></script>
+    
+    <script type="text/javascript" src="https://cdn.rawgit.com/named-data/ndn-js/v0.10.0/build/ndn.min.js"></script>
+    <script type="text/javascript">
+     var face = new Face({host: "localhost"});
+
+     function fetch(filename) {
+         var client = {};
+         client.baseName = new Name("/my-local-prefix/simple-fetch/file").append(filename);
+         client.currentSeqNo = 0;
+
+         requestNext(client);
+     }
+         
+     function requestNext(self) {
+         interest = new Interest(new Name(self.baseName).appendSequenceNumber(self.currentSeqNo));
+         interest.setMustBeFresh(true);
+         face.expressInterest(interest, function(interest, data) {
+             _onData(self, interest, data);
+         }, function(interest) {
+             _onTimeout(self, interest);
+         });
+         self.currentSeqNo += 1;
+     }
+
+     function _onData(self, interest, data) {
+         console.log("NDN-JS: " + data.getName());
+
+         $("<li>", {text: data.getName().toUri()})
+             .appendTo($("#receivedPackets"));
+
+         seqNum = interest.getName().get(-1).toSequenceNumber();
+         if (seqNum >= 10) {
+             return;
+         }
+         
+         requestNext(self);
+     }
+     
+     function _onTimeout(self, interest) {
+         console.log("NDN-JS: TIMEOUT for " + interest.getName());
+
+         face.expressInterest(interest.getName(), function(interest, data) {
+             _onData(self, interest, data);
+         }, function(interest) {
+             _onTimeout(self, interest);
+         });
+     }
+    </script>
+  </body>
+</html>
+
