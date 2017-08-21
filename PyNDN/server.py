@@ -22,6 +22,7 @@ try:
     import asyncio
 except ImportError:
     import trollius as asyncio
+from pyndn.threadsafe_face import ThreadsafeFace
 import logging
 logging.basicConfig()
 
@@ -59,7 +60,7 @@ class Server:
 
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
-    face = ndn.ThreadsafeFace(loop, None)
+    face = ThreadsafeFace(loop, None)
     server = Server(face)
 
     loop.run_forever()
