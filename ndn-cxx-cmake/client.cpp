@@ -43,6 +43,7 @@ private:
     std::cerr << ">> C++ " << nextName << std::endl;
     m_face.expressInterest(ndn::Interest(nextName).setMustBeFresh(true),
                            std::bind(&Client::onData, this, _2),
+                           std::bind(&Client::onNack, this, _1),
                            std::bind(&Client::onTimeout, this, _1));
     ++m_currentSeqNo;
   }
@@ -64,12 +65,19 @@ private:
   }
 
   void
+  onNack(const ndn::Interest& interest)
+  {
+    std::cerr << "<< got NACK for " << interest << std::endl;
+  }
+
+  void
   onTimeout(const ndn::Interest& interest)
   {
     // re-express interest
     std::cerr << "<< C++ timeout for " << interest << std::endl;
-    m_face.expressInterest(interest.getName(),
+    m_face.expressInterest(ndn::Interest(interest.getName()),
                            std::bind(&Client::onData, this, _2),
+                           std::bind(&Client::onNack, this, _1),
                            std::bind(&Client::onTimeout, this, _1));
   }
 
